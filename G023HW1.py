@@ -26,8 +26,8 @@ def main():
     data_path = sys.argv[3]
     assert os.path.isfile(data_path), "File or folder not found"
     rawData = sc.textFile(data_path, minPartitions=C)
-    edges = rawData.flatMap(lambda x: (int(x.split(',')[0]), int(x.split(',')[1])))
-    edges = edges.repartition(C).cache()
+    edges = rawData.flatMap(lambda x: (int(x.split(',')[0]), int(x.split(',')[1]))).cache()
+    edges = edges.repartition(C)
 
     # Print parameters info
     print("Dataset = ", data_path)
