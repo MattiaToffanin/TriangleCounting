@@ -33,17 +33,18 @@ def CountTriangles(edges):
 
 
 def MR_ApproxTCwithNodeColors(edges, C):
-    p = 8191
-    a = rand.randint(1, p - 1)
-    b = rand.randint(0, p - 1)
+    p = 8191  # Prime number
+    a = rand.randint(1, p - 1)  # Random number at each invocation
+    b = rand.randint(0, p - 1)  # Random number at each invocation
 
-    def hc(u):
+    def hc(u):  # Color hash function
         return ((a * u + b) % p) % C
 
-    edges_counter = (edges.map(lambda v: (hc(v[0]), (v[0], v[1])) if hc(v[0]) == hc(v[1]) else (-1, 0))
-                     .groupByKey().mapValues(list)
-                     .map(lambda v: (0, CountTriangles(v[1])) if v[0] != -1 else (0, 0))
-                     .reduceByKey(lambda x, y: x + y))
+    edges_counter = (
+        edges.map(lambda v: (hc(v[0]), (v[0], v[1])) if hc(v[0]) == hc(v[1]) else (-1, 0))  # Map Phase (R1)
+        .groupByKey()  # Shuffle + Grouping
+        .mapValues(list).map(lambda v: (0, CountTriangles(v[1])) if v[0] != -1 else (0, 0))  # Reduce Phase (R1)
+        .reduceByKey(lambda x, y: x + y))  # Reduce Phase (R2)
 
     return edges_counter.collect()[0][1] * C * C
 
