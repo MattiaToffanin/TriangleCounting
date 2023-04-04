@@ -40,22 +40,12 @@ def MR_ApproxTCwithNodeColors(edges, C):
     def hc(u):
         return ((a * u + b) % p) % C
 
-    def colorDivision(edges):
-        edges_dict = {}
-        for (u, v) in edges.collect():
-            if hc(u) == hc(v):
-                if hc(u) not in edges_dict:
-                    edges_dict[hc(u)] = []
-                edges_dict[hc(u)].append((u, v))
-        return edges_dict
+    edges_counter = (edges.map(lambda v: (hc(v[0]), (v[0], v[1])) if hc(v[0]) == hc(v[1]) else (-1, 0))
+                     .groupByKey().mapValues(list)
+                     .map(lambda v: (0, CountTriangles(v[1])) if v[0] != -1 else (0, 0))
+                     .reduceByKey(lambda x, y: x + y))
 
-    edges = (edges.flatMap(colorDivision(edges)).collect()
-                     #.reduceByKey(lambda x: CountTriangles(x))
-                     #.map(lambda k, v: (0, v))
-                     #.reduceByKey(lambda x, y: x + y)
-                     )
-    print(edges)
-    return 0 #edges_counter #.values()[0] * C * C
+    return edges_counter.collect()[0][1] * C * C
 
 
 def MR_ApproxTCwithSparkPartitions(edges):
