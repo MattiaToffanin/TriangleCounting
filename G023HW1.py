@@ -45,7 +45,6 @@ def MR_ApproxTCwithNodeColors(edges, C):
         .groupByKey()  # Shuffle + Grouping
         .mapValues(list).map(lambda v: (0, CountTriangles(v[1])) if v[0] != -1 else (0, 0))  # Reduce Phase (R1)
         .reduceByKey(lambda x, y: x + y))  # Reduce Phase (R2)
-
     return edges_counter.collect()[0][1] * C * C
 
 
@@ -99,7 +98,7 @@ def main():
         end_time = time.time()
         triangles_counter.append(triangles_number)
         cumulative_running_time += (end_time - start_time)
-    median_triangles = np.median(triangles_counter)  # TO DO: verify if we can use numpy
+    median_triangles = np.median(triangles_counter)
     mean_running_time = cumulative_running_time / R
 
     # Print Algorithm1 output
