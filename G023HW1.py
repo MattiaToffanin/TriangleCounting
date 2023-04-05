@@ -50,13 +50,13 @@ def MR_ApproxTCwithNodeColors(edges, C):
 
 
 def MR_ApproxTCwithSparkPartitions(edges, C):
-    def count(pairs):
+    def list_counters(pairs):
         return [(0, CountTriangles(e[1])) for e in pairs]
 
-    edges_counter = (edges.map(lambda e: (rand.randint(0, C - 1), e))
-                     .groupByKey().mapValues(list)
-                     .mapPartitions(count)
-                     .reduceByKey(lambda x, y: x + y))
+    edges_counter = (edges.map(lambda e: (rand.randint(0, C - 1), e))  # Map Phase (R1)
+                     .groupByKey()  # Shuffle + Grouping
+                     .mapValues(list).mapPartitions(list_counters)  # Reduce Phase (R1)
+                     .reduceByKey(lambda x, y: x + y))  # Reduce Phase (R2)
     return edges_counter.collect()[0][1] * C * C
 
 
