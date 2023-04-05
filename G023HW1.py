@@ -49,8 +49,10 @@ def MR_ApproxTCwithNodeColors(edges, C):
     return edges_counter.collect()[0][1] * C * C
 
 
-def MR_ApproxTCwithSparkPartitions(edges):
-    return 2  # TO DO: implement Algorithm2
+def MR_ApproxTCwithSparkPartitions(edges, C):
+    def f(iterator): yield CountTriangles(iterator)
+    edges_counter = edges.mapPartitions(f).collect()
+    return sum(edges_counter) * C * C
 
 
 def main():
@@ -101,7 +103,7 @@ def main():
     print("- Running time (average over", R, "runs) = %d" % (mean_running_time * 1000), "ms")
 
     start_time = time.time()
-    triangles_number = MR_ApproxTCwithSparkPartitions(edges)
+    triangles_number = MR_ApproxTCwithSparkPartitions(edges, C)
     end_time = time.time()
     running_time = end_time - start_time
 
@@ -112,4 +114,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main() 
+    main()
