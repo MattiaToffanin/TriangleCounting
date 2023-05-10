@@ -78,7 +78,7 @@ def main():
 
     # Read input file and subdivide it into K random partitions
     data_path = sys.argv[4]
-    assert os.path.isfile(data_path), "File or folder not found"
+    #assert os.path.isfile(data_path), "File or folder not found"
     rawData = sc.textFile(data_path, minPartitions=32)
     edges = rawData.map(lambda x: (int(x.split(',')[0]), int(x.split(',')[1])))
     edges = edges.repartition(32).cache()
