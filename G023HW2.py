@@ -95,7 +95,6 @@ def MR_ExactTC(edges, C):
         .groupByKey()
         .mapValues(list).map(lambda v: (v[0], countTriangles2(v[0], v[1], a, b, p, C)))
         .map(lambda v: (0, v[1])).reduceByKey(lambda x, y: x + y))
-
     return edges_counter.collect()[0][1]
 
 
