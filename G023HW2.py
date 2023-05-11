@@ -32,6 +32,40 @@ def CountTriangles(edges):
     return triangle_count
 
 
+def countTriangles2(colors_tuple, edges, rand_a, rand_b, p, num_colors):
+    # We assume colors_tuple to be already sorted by increasing colors. Just transform in a list for simplicity
+    colors = list(colors_tuple)
+    # Create a dictionary for adjacency list
+    neighbors = defaultdict(set)
+    # Create a dictionary for storing node colors
+    node_colors = dict()
+    for edge in edges:
+        u, v = edge
+        node_colors[u] = ((rand_a * u + rand_b) % p) % num_colors
+        node_colors[v] = ((rand_a * v + rand_b) % p) % num_colors
+        neighbors[u].add(v)
+        neighbors[v].add(u)
+
+    # Initialize the triangle count to zero
+    triangle_count = 0
+
+    # Iterate over each vertex in the graph
+    for v in neighbors:
+        # Iterate over each pair of neighbors of v
+        for u in neighbors[v]:
+            if u > v:
+                for w in neighbors[u]:
+                    # If w is also a neighbor of v, then we have a triangle
+                    if w > u and w in neighbors[v]:
+                        # Sort colors by increasing values
+                        triangle_colors = sorted((node_colors[u], node_colors[v], node_colors[w]))
+                        # If triangle has the right colors, count it.
+                        if colors == triangle_colors:
+                            triangle_count += 1
+    # Return the total number of triangles in the graph
+    return triangle_count
+
+
 def MR_ApproxTCwithNodeColors(edges, C):
     p = 8191  # Prime number
     a = rand.randint(1, p - 1)  # Random number at each invocation
@@ -49,7 +83,20 @@ def MR_ApproxTCwithNodeColors(edges, C):
 
 
 def MR_ExactTC(edges, C):
-    return 1
+    p = 8191  # Prime number
+    a = rand.randint(1, p - 1)  # Random number at each invocation
+    b = rand.randint(0, p - 1)  # Random number at each invocation
+
+    def hc(u):  # Color hash function
+        return ((a * u + b) % p) % C
+
+    edges_counter = (
+        edges.flatMap(lambda v: [(tuple(np.sort([hc(v[0]), hc(v[1]), i])), (v[0], v[1])) for i in range(C)])
+        .groupByKey()
+        .mapValues(list).map(lambda v: (v[0], countTriangles2(v[0], v[1], a, b, p, C)))
+        .map(lambda v: (0, v[1])).reduceByKey(lambda x, y: x + y))
+
+    return edges_counter.collect()[0][1]
 
 
 def main():
@@ -78,7 +125,7 @@ def main():
 
     # Read input file and subdivide it into K random partitions
     data_path = sys.argv[4]
-    #assert os.path.isfile(data_path), "File or folder not found"
+    # assert os.path.isfile(data_path), "File or folder not found"
     rawData = sc.textFile(data_path, minPartitions=32)
     edges = rawData.map(lambda x: (int(x.split(',')[0]), int(x.split(',')[1])))
     edges = edges.repartition(32).cache()
