@@ -104,6 +104,7 @@ def main():
 
     # SPARK setup
     conf = SparkConf().setAppName('TriangleCounting')
+    conf.set("spark.locality.wait", "0s");
     sc = SparkContext(conf=conf)
 
     # Read C parameter
