@@ -91,10 +91,10 @@ def MR_ExactTC(edges, C):
         return ((a * u + b) % p) % C
 
     edges_counter = (
-        edges.flatMap(lambda v: [(tuple(np.sort([hc(v[0]), hc(v[1]), i])), (v[0], v[1])) for i in range(C)])
-        .groupByKey()
-        .mapValues(list).map(lambda v: (v[0], countTriangles2(v[0], v[1], a, b, p, C)))
-        .map(lambda v: (0, v[1])).reduceByKey(lambda x, y: x + y))
+        edges.flatMap(lambda v: [(tuple(np.sort([hc(v[0]), hc(v[1]), i])), (v[0], v[1])) for i in range(C)])  # Map Phase (R1)
+        .groupByKey()  # Shuffle + Grouping
+        .mapValues(list).map(lambda v: (v[0], countTriangles2(v[0], v[1], a, b, p, C)))  # Reduce Phase (R1)
+        .map(lambda v: (0, v[1])).reduceByKey(lambda x, y: x + y))  # Reduce Phase (R2)
     return edges_counter.collect()[0][1]
 
 
