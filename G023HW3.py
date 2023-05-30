@@ -32,7 +32,7 @@ def process_batch(time, batch):
 
 
 if __name__ == '__main__':
-    assert len(sys.argv) == 6, "USAGE: rows, columns, left endpoint, right endpoint, number of top frequent items of interest, port"
+    assert len(sys.argv) == 7, "USAGE: rows, columns, left endpoint, right endpoint, number of top frequent items of interest, port"
 
     # IMPORTANT: when running locally, it is *fundamental* that the
     # `master` setting is "local[*]" or "local[n]" with n > 1, otherwise
