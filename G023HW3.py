@@ -74,8 +74,8 @@ if __name__ == '__main__':
     print("Number of rows of the count sketch =", D)
 
     W = int(sys.argv[2])
-    print("Number of columns of the count sketch =", W)
     assert W.isdigit(), "W must be an integer"
+    print("Number of columns of the count sketch =", W)
 
     left = int(sys.argv[3])
     print("Left endpoint of the interval of interest =", left)
