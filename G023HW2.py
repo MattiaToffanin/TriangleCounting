@@ -104,7 +104,7 @@ def main():
 
     # SPARK setup
     conf = SparkConf().setAppName('TriangleCounting')
-    conf.set("spark.locality.wait", "0s");
+    conf.set("spark.locality.wait", "0s")
     conf.setMaster("yarn")
     sc = SparkContext(conf=conf)
 
