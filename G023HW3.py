@@ -3,23 +3,41 @@ from pyspark.streaming import StreamingContext
 from pyspark import StorageLevel
 import threading
 import sys
+import random as rand
+import numpy as np
 
 # Number of items to read
-THRESHOLD = 10000000
+THRESHOLD = 1000
+
+p = 8191  # Prime number
+a = rand.randint(1, p - 1)  # Random number at each invocation
+b = rand.randint(0, p - 1)  # Random number at each invocation
+
+
+def hc(u, j):
+    return (((a * u + b) % p) * j) % W
+
+
+def g(u, j):
+    return -1 if (u * j) % 2 == 0 else +1
 
 
 def process_batch(time, batch):
     # We are working on the batch at time `time`.
-    global streamLength, histogram
+    global streamLength, histogram, C, left, right, D, W
     batch_size = batch.count()
     streamLength[0] += batch_size
     # Extract the distinct items from the batch
-    batch_items = batch.map(lambda s: (int(s), 1)).reduceByKey(lambda i1, i2: 1).collectAsMap()
+    batch_items = batch.map(lambda s: int(s)).filter(lambda x: x >= left and x <= right).collect()
 
-    # Update the streaming state
-    for key in batch_items:
-        if key not in histogram:
-            histogram[key] = 1
+    for item in batch_items:
+        for j in range(D):
+            C[j, hc(item, j)] += g(item, j)
+
+        if item not in histogram:
+            histogram[item] = 1
+        else:
+            histogram[item] += 1
 
     if batch_size > 0:
         print("Batch size at time [{0}] is: {1}".format(time, batch_size))
@@ -83,6 +101,7 @@ if __name__ == '__main__':
     # Data structures to maintain the state of the stream
     streamLength = [0]
     histogram = {}
+    C = np.zeros((D, W))
 
     # Stream creation
     stream = ssc.socketTextStream("algo.dei.unipd.it", portExp, StorageLevel.MEMORY_AND_DISK)
@@ -98,6 +117,13 @@ if __name__ == '__main__':
     ssc.stop(False, True)
     print("Streaming engine stopped")
 
+    fu = {}
+    for item in range(left, right + 1):
+        fu[item] = np.median([g(item, j) * C[j, hc(item, j)] for j in range(D)])
+    print(fu)
+
+    print()
+    print(histogram)
     # Print output
     print("Number of items processed =", streamLength[0])
     print("Number of distinct items =", len(histogram))
