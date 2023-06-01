@@ -14,7 +14,7 @@ a = rand.randint(1, p - 1)  # Random number at each invocation
 b = rand.randint(0, p - 1)  # Random number at each invocation
 
 
-def hc(u, j):
+def h(u, j):
     return (((a * u + b) % p) * j) % W
 
 
@@ -29,10 +29,11 @@ def process_batch(time, batch):
     streamLength[0] += batch_size
     # Extract the distinct items from the batch
     batch_items = batch.map(lambda s: int(s)).filter(lambda x: x >= left and x <= right).collect()
+    streamLength[1] += len(batch_items)
 
     for item in batch_items:
         for j in range(D):
-            C[j, hc(item, j)] += g(item, j)
+            C[j, h(item, j)] += g(item, j)
 
         if item not in histogram:
             histogram[item] = 1
@@ -99,7 +100,7 @@ if __name__ == '__main__':
     print("Port number =", portExp)
 
     # Data structures to maintain the state of the stream
-    streamLength = [0]
+    streamLength = [0, 0]
     histogram = {}
     C = np.zeros((D, W))
 
@@ -119,11 +120,33 @@ if __name__ == '__main__':
 
     fu = {}
     for item in range(left, right + 1):
-        fu[item] = np.median([g(item, j) * C[j, hc(item, j)] for j in range(D)])
-    print(fu)
+        fu[item] = np.median([g(item, j) * C[j, h(item, j)] for j in range(D)])
 
-    print()
-    print(histogram)
+    f2j = np.zeros(D)
+    for j in range(D):
+        for k in range(W):
+            f2j[j] += C[j, k] ** 2
+    f2 = np.median(f2j)
+    f2 /= streamLength[1] ** 2
+
+    true_F2 = 0
+    for k in histogram:
+        true_F2 += histogram[k] ** 2
+    true_F2 /= streamLength[1] ** 2
+
+    histogram = dict(sorted(histogram.items(), key=lambda item: item[1]))
+
+    histogram_list = list(histogram.items())[-K:]
+
+    cumulative = 0
+    for (item, freq) in histogram_list:
+        cumulative += abs(freq - fu[item]) / freq
+    mean = cumulative / K
+
+    print(mean)
+
+    print(histogram_list)
+
     # Print output
     print("Number of items processed =", streamLength[0])
     print("Number of distinct items =", len(histogram))
