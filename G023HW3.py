@@ -26,6 +26,9 @@ def g(u, j):
 def process_batch(time, batch):
     global streamLength, true_frequencies, C, left, right, D, W
     batch_size = batch.count()
+    # If we already have enough points (> THRESHOLD), skip this batch.
+    if streamLength[0] >= THRESHOLD:
+        return
     streamLength[0] += batch_size  # Increment the entire stream length
     # Extract the distinct items from the batch in [left; right]
     batch_items = batch.map(lambda s: int(s)).filter(lambda x: left <= x <= right).collect()
@@ -39,9 +42,6 @@ def process_batch(time, batch):
             true_frequencies[xt] = 1
         else:
             true_frequencies[xt] += 1
-
-    if batch_size > 0:
-        print("Batch size at time [{0}] is: {1}".format(time, batch_size))
 
     # Stopping condition
     if streamLength[0] >= THRESHOLD:
@@ -91,14 +91,6 @@ if __name__ == '__main__':
     assert portExp.isdigit(), "portExp must be an integer"
     portExp = int(portExp)
 
-    # Print parameters info
-    print("Number of rows of the count sketch =", D)
-    print("Number of columns of the count sketch =", W)
-    print("Left endpoint of the interval of interest =", left)
-    print("Right endpoint of the interval of interest =", right)
-    print("Number of top frequent items of interest =", K)
-    print("Port number =", portExp)
-
     # Data structures to maintain the state of the stream
     streamLength = [0, 0]  # i0: entire stream length, i1: filtered stream length
     true_frequencies = {}  # dictionary to store the true frequencies
@@ -110,13 +102,13 @@ if __name__ == '__main__':
     # Stream reading
     stream.foreachRDD(lambda time, batch: process_batch(time, batch))
 
-    print("Starting streaming engine")
+    # Starting streaming engine
     ssc.start()
-    print("Waiting for shutdown condition")
+    # Waiting for shutdown condition
     stopping_condition.wait()
-    print("Stopping the streaming engine")
+    # Stopping the streaming engine
     ssc.stop(False, True)
-    print("Streaming engine stopped")
+    # Streaming engine stopped
 
     # Approximate frequency calculation
     appr_frequencies = {}  # dictionary to store the approximate frequencies
@@ -146,14 +138,17 @@ if __name__ == '__main__':
     # Average relative error calculation
     cumulative = 0
     for (item, freq) in true_frequencies_list:
-        cumulative += abs(freq - appr_frequencies[item]) / freq
+        cumulative = cumulative + (abs(freq - appr_frequencies[item]) / freq)
     average_relative_error = cumulative / K
 
     # Print output
-    print("Number of items processed =", streamLength[0])
-    print("Number of filtered items processed =", streamLength[1])
-    print("Number of distinct filtered items =", len(appr_frequencies))
-    print("Average relative error =", average_relative_error)
+    # Print parameters info
+    print("D = %d W = %d [left,right] = [%d,%d] K = %d Port = %d" % (D, W, left, right, K, portExp))
+    print("Total number of items =", streamLength[0])
+    print("Total number of items in [%d,%d] =" % (left, right), streamLength[1])
+    print("Number of distinct items in [%d,%d] =" % (left, right), len(appr_frequencies))
     if K <= 20:
         for (item, freq) in true_frequencies_list:
-            print("Item", item, "True frequency", freq, "Approximate frequency", appr_frequencies[item])
+            print("Item %d Freq = %d Est. Freq = %d" % (item, freq, appr_frequencies[item]))
+    print("Avg err for top %d =" % K, average_relative_error)
+    print("F2 %f F2 Estimate %f" % (true_second_moment, appr_second_moment))
