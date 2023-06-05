@@ -15,7 +15,7 @@ b = rand.randint(0, p - 1)  # Random number at each run
 
 # Hash function
 def h(u, j):
-    return (((a * u + b) % p) * j) % W
+    return ((a * u + b * j) % p) % W
 
 
 # Hash function
@@ -142,7 +142,6 @@ if __name__ == '__main__':
     average_relative_error = cumulative / K
 
     # Print output
-    # Print parameters info
     print("D = %d W = %d [left,right] = [%d,%d] K = %d Port = %d" % (D, W, left, right, K, portExp))
     print("Total number of items =", streamLength[0])
     print("Total number of items in [%d,%d] =" % (left, right), streamLength[1])
