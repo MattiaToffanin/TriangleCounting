@@ -33,7 +33,7 @@ def CountTriangles(edges):
 
 
 def MR_ApproxTCwithNodeColors(edges, C):
-    p = 8191  # Prime number
+    p = 8192  # Prime number
     a = rand.randint(1, p - 1)  # Random number at each invocation
     b = rand.randint(0, p - 1)  # Random number at each invocation
 
