@@ -10,17 +10,22 @@ THRESHOLD = 10000000  # Number of items to read
 
 p = 8191  # Prime number
 a = rand.randint(1, p - 1)  # Random number at each run
-b = rand.randint(0, p - 1)  # Random number at each run
+b = rand.randint(1, p - 1)  # Random number at each run
+c = rand.randint(1, p - 1)  # Random number at each run
+d = rand.randint(1, p - 1)  # Random number at each run
 
 
 # Hash function
 def h(u, j):
-    return ((a * u + b * j) % p) % W
+    rand.seed((a * u + b * j))
+    return rand.randint(1, p) % W
 
 
 # Hash function
 def g(u, j):
-    return -1 if (u * j) % 2 == 0 else +1
+    rand.seed((c * u + d * j))
+    val = rand.randint(0, 1)
+    return -1 if val == 0 else +1
 
 
 def process_batch(time, batch):
@@ -31,7 +36,7 @@ def process_batch(time, batch):
         return
     streamLength[0] += batch_size  # Increment the entire stream length
     # Extract the distinct items from the batch in [left; right]
-    batch_items = batch.map(lambda s: int(s)).filter(lambda x: left <= x <= right).collect()
+    batch_items = batch.map(lambda s: int(s)).filter(lambda x: left <= x <= right).collect()[:THRESHOLD]
     streamLength[1] += len(batch_items)  # Increment the number of items processed
 
     for xt in batch_items:
